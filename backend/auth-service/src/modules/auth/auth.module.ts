@@ -6,6 +6,7 @@ import type { SignOptions } from 'jsonwebtoken';
 import { User } from './entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -13,12 +14,13 @@ import { AuthService } from './auth.service';
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'dev_jwt_secret',
       signOptions: {
-        expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as SignOptions['expiresIn'],
+        expiresIn: (process.env.JWT_EXPIRES_IN ||
+          '1d') as SignOptions['expiresIn'],
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
