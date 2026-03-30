@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wfh_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wfh_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - wfh_network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: api_gateway
+    restart: unless-stopped
+    env_file:
+      - ./backend/api-gateway/.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/api-gateway:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      - employee-service
+      - attendance-service
+    networks:
+      - wfh_network
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: auth_service
+    restart: unless-stopped
+    env_file:
+      - ./backend/auth-service/.env
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+    networks:
+      - wfh_network
+
+  employee-service:
+    build:
+      context: ./backend/employee-service
+      dockerfile: Dockerfile
+    container_name: employee_service
+    restart: unless-stopped
+    env_file:
+      - ./backend/employee-service/.env
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./backend/employee-service:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+    networks:
+      - wfh_network
+
+  attendance-service:
+    build:
+      context: ./backend/attendance-service
+      dockerfile: Dockerfile
+    container_name: attendance_service
+    restart: unless-stopped
+    env_file:
+      - ./backend/attendance-service/.env
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./backend/attendance-service:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+    networks:
+      - wfh_network
+
+volumes:
+  mysql_data:
+
+networks:
+  wfh_network:
+    driver: bridge
