@@ -16,13 +16,13 @@ export class AttendanceService {
     private readonly attendanceRepository: Repository<Attendance>,
   ) {}
 
-  async checkIn(createAttendanceDto: CreateAttendanceDto) {
+  async checkIn(employeeId: number, createAttendanceDto: CreateAttendanceDto) {
     const today = new Date();
     const attendanceDate = today.toISOString().split('T')[0];
 
     const existingAttendance = await this.attendanceRepository.findOne({
       where: {
-        employee_id: createAttendanceDto.employee_id,
+        employee_id: employeeId,
         attendance_date: attendanceDate,
       },
     });
@@ -32,7 +32,7 @@ export class AttendanceService {
     }
 
     const attendance = this.attendanceRepository.create({
-      employee_id: createAttendanceDto.employee_id,
+      employee_id: employeeId,
       attendance_date: attendanceDate,
       check_in_time: new Date(),
       photo_path: createAttendanceDto.photo_path,

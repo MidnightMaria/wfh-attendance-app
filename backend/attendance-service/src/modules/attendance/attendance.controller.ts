@@ -5,25 +5,38 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import type { Express } from 'express';
 
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('attendances')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('check-in')
-  checkIn(@Body() createAttendanceDto: CreateAttendanceDto) {
-    return this.attendanceService.checkIn(createAttendanceDto);
+  checkIn(@Req() req: any, @Body() createAttendanceDto: CreateAttendanceDto) {
+    const employeeId = req.user?.employee_id;
+
+    if (!employeeId) {
+      throw new UnauthorizedException('Employee ID not found in token');
+    }
+
+    return this.attendanceService.checkIn(employeeId, createAttendanceDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('check-in-with-photo')
   @UseInterceptors(
     FileInterceptor('photo', {
@@ -37,10 +50,17 @@ export class AttendanceController {
     }),
   )
   checkInWithPhoto(
+    @Req() req: any,
     @UploadedFile() file: Express.Multer.File,
     @Body() createAttendanceDto: CreateAttendanceDto,
   ) {
-    return this.attendanceService.checkIn({
+    const employeeId = req.user?.employee_id;
+
+    if (!employeeId) {
+      throw new UnauthorizedException('Employee ID not found in token');
+    }
+
+    return this.attendanceService.checkIn(employeeId, {
       ...createAttendanceDto,
       photo_path: file ? file.path : undefined,
     });
