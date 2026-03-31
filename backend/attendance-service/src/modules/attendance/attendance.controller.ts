@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -70,11 +71,21 @@ export class AttendanceController {
     });
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get()
-  findAll() {
-    return this.attendanceService.findAll();
+  findAll(
+    @Query('employee_id') employeeId?: string,
+    @Query('attendance_date') attendanceDate?: string,
+  ) {
+    return this.attendanceService.findAll(
+      employeeId ? parseInt(employeeId, 10) : undefined,
+      attendanceDate,
+    );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.attendanceService.findOne(id);

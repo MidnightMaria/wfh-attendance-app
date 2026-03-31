@@ -42,10 +42,22 @@ export class AttendanceService {
     return this.attendanceRepository.save(attendance);
   }
 
-  async findAll() {
-    return this.attendanceRepository.find({
-      order: { id: 'DESC' },
-    });
+  async findAll(employeeId?: number, attendanceDate?: string) {
+    const query = this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .orderBy('attendance.id', 'DESC');
+
+    if (employeeId) {
+      query.andWhere('attendance.employee_id = :employeeId', { employeeId });
+    }
+
+    if (attendanceDate) {
+      query.andWhere('attendance.attendance_date = :attendanceDate', {
+        attendanceDate,
+      });
+    }
+
+    return query.getMany();
   }
 
   async findOne(id: number) {
