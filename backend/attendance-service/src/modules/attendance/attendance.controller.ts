@@ -19,12 +19,15 @@ import type { Express } from 'express';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
 
 @Controller('attendances')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EMPLOYEE')
   @Post('check-in')
   checkIn(@Req() req: any, @Body() createAttendanceDto: CreateAttendanceDto) {
     const employeeId = req.user?.employee_id;
@@ -36,7 +39,8 @@ export class AttendanceController {
     return this.attendanceService.checkIn(employeeId, createAttendanceDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('EMPLOYEE')
   @Post('check-in-with-photo')
   @UseInterceptors(
     FileInterceptor('photo', {

@@ -7,6 +7,7 @@ import { Attendance } from './entities/attendance.entity';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceService } from './attendance.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AttendanceController],
-  providers: [AttendanceService, JwtStrategy],
+  providers: [AttendanceService, JwtStrategy, RolesGuard],
 })
 export class AttendanceModule {}
