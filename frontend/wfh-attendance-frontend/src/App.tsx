@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CheckIn from './pages/CheckIn';
 import Employees from './pages/Employees';
+import AttendanceMonitoring from './pages/AttendanceMonitoring';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -34,6 +35,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <Employees />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/attendance-monitoring"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AttendanceMonitoring />
             </ProtectedRoute>
           }
         />

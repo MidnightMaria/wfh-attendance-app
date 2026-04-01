@@ -24,7 +24,7 @@ export default function Navbar() {
           </p>
         </div>
 
-        <nav className="flex items-center gap-3">
+        <nav className="flex items-center gap-2">
           <Link
             to="/dashboard"
             className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
@@ -42,12 +42,21 @@ export default function Navbar() {
           )}
 
           {profile?.role === 'ADMIN' && (
-            <Link
-              to="/employees"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Employees
-            </Link>
+            <>
+              <Link
+                to="/employees"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Employees
+              </Link>
+
+              <Link
+                to="/attendance-monitoring"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Attendance
+              </Link>
+            </>
           )}
 
           <button

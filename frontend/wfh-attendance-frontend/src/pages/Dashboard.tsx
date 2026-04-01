@@ -14,7 +14,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">
             Account Overview
@@ -26,28 +26,62 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Quick Access</h3>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {profile?.role === 'EMPLOYEE' && (
+        {profile?.role === 'EMPLOYEE' && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Attendance
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Submit your daily attendance and upload your work-from-home proof.
+            </p>
+            <div className="mt-4">
               <Link
                 to="/check-in"
-                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
+                className="inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
               >
                 Go to Check-In
               </Link>
-            )}
-
-            {profile?.role === 'ADMIN' && (
-              <Link
-                to="/employees"
-                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
-              >
-                Manage Employees
-              </Link>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {profile?.role === 'ADMIN' && (
+          <>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Employee Management
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Create, update, and deactivate employee records.
+              </p>
+              <div className="mt-4">
+                <Link
+                  to="/employees"
+                  className="inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
+                >
+                  Open Employees
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Attendance Monitoring
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Review attendance data submitted by employees.
+              </p>
+              <div className="mt-4">
+                <Link
+                  to="/attendance-monitoring"
+                  className="inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
+                >
+                  View Attendance
+                </Link>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </AppLayout>
   );
