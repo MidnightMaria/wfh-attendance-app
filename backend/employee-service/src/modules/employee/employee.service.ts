@@ -110,4 +110,12 @@ export class EmployeeService {
 
     return this.employeeRepository.save(employee);
   }
+
+  async activate(id: number) {
+    const employee = await this.findOne(id);
+
+    employee.is_active = true;
+
+    return this.employeeRepository.save(employee);
+  }
 }

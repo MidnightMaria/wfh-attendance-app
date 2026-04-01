@@ -96,6 +96,23 @@ export default function Employees() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleActivate = async (id: number) => {
+  try {
+    setMessage('');
+    setMessageType('');
+
+    await API.patch(`/employees/${id}/activate`);
+
+    setMessage('Employee activated successfully.');
+    setMessageType('success');
+
+    await fetchEmployees();
+    } catch (error) {
+        setMessage(extractErrorMessage(error));
+        setMessageType('error');
+    }
+    };
+
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
@@ -286,25 +303,32 @@ export default function Employees() {
                           {employee.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                        <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button
+                            <button
                             onClick={() => handleEdit(employee)}
                             className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                          >
-                            Edit
-                          </button>
-
-                          {employee.is_active && (
-                            <button
-                              onClick={() => handleDeactivate(employee.id)}
-                              className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
                             >
-                              Deactivate
+                            Edit
                             </button>
-                          )}
+
+                            {employee.is_active ? (
+                            <button
+                                onClick={() => handleDeactivate(employee.id)}
+                                className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+                            >
+                                Deactivate
+                            </button>
+                            ) : (
+                            <button
+                                onClick={() => handleActivate(employee.id)}
+                                className="rounded-lg border border-green-200 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50"
+                            >
+                                Activate
+                            </button>
+                            )}
                         </div>
-                      </td>
+                        </td>
                     </tr>
                   ))}
 

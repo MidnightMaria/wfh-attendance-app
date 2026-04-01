@@ -51,4 +51,12 @@ export class EmployeeController {
   ) {
     return this.employeeService.deactivate(id, authorization);
   }
+
+  @Patch(':id/activate')
+  activate(
+    @Param('id', ParseIntPipe) id: number,
+    @Headers('authorization') authorization?: string,
+  ) {
+    return this.employeeService.activate(id, authorization);
+  }
 }

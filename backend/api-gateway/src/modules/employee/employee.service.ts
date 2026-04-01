@@ -92,4 +92,21 @@ export class EmployeeService {
       handleServiceError(error);
     }
   }
+
+  async activate(id: number, authorization?: string) {
+  try {
+    const response = await firstValueFrom(
+      this.httpService.patch(
+        `${this.employeeServiceUrl}/employees/${id}/activate`,
+        {},
+        {
+          headers: this.getAuthHeader(authorization),
+        },
+      ),
+    );
+    return response.data;
+  } catch (error) {
+    handleServiceError(error);
+  }
+}
 }
