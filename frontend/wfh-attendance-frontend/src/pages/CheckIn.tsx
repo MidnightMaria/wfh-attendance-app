@@ -2,16 +2,32 @@ import { useState } from 'react';
 import AppLayout from '../layouts/AppLayout';
 import API from '../services/api';
 
+function extractErrorMessage(error: any): string {
+  const message = error?.response?.data?.message;
+
+  if (Array.isArray(message)) {
+    return message.join(', ');
+  }
+
+  if (typeof message === 'string') {
+    return message;
+  }
+
+  return 'Failed to submit attendance.';
+}
+
 export default function CheckIn() {
   const [note, setNote] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [loading, setLoading] = useState(false);
 
   const handleCheckIn = async () => {
     try {
       setLoading(true);
       setMessage('');
+      setMessageType('');
 
       if (photo) {
         const formData = new FormData();
@@ -28,12 +44,12 @@ export default function CheckIn() {
       }
 
       setMessage('Check-in submitted successfully.');
+      setMessageType('success');
       setNote('');
       setPhoto(null);
     } catch (error: any) {
-      setMessage(
-        error?.response?.data?.message || 'Failed to submit attendance.',
-      );
+      setMessage(extractErrorMessage(error));
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -73,7 +89,13 @@ export default function CheckIn() {
           </div>
 
           {message && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <div
+              className={`rounded-xl px-4 py-3 text-sm ${
+                messageType === 'success'
+                  ? 'border border-green-200 bg-green-50 text-green-700'
+                  : 'border border-red-200 bg-red-50 text-red-600'
+              }`}
+            >
               {message}
             </div>
           )}
