@@ -15,27 +15,39 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
 @Controller('employees')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
+  // internal lookup for auth-service
+  @Get('internal/:id')
+  findInternal(@Param('id', ParseIntPipe) id: number) {
+    return this.employeeService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post()
   create(@Body() createEmployeeDto: CreateEmployeeDto) {
     return this.employeeService.create(createEmployeeDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get()
   findAll() {
     return this.employeeService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOneProtected(@Param('id', ParseIntPipe) id: number) {
     return this.employeeService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -44,11 +56,15 @@ export class EmployeeController {
     return this.employeeService.update(id, updateEmployeeDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id/deactivate')
   deactivate(@Param('id', ParseIntPipe) id: number) {
     return this.employeeService.deactivate(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id/activate')
   activate(@Param('id', ParseIntPipe) id: number) {
     return this.employeeService.activate(id);

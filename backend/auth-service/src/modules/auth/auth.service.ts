@@ -7,7 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { User, UserRole } from './entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -18,11 +19,32 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly httpService: HttpService,
   ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
+
+  private async validateEmployee(employee_id: number) {
+  try {
+    const response = await firstValueFrom(
+      this.httpService.get(
+        `${process.env.EMPLOYEE_SERVICE_URL}/employees/internal/${employee_id}`,
+      ),
+    );
+
+    return response.data;
+  } catch (error: any) {
+    const status = error?.response?.status;
+
+    if (status === 404) {
+      throw new BadRequestException('Invalid employee_id');
+    }
+
+    throw new BadRequestException('Failed to validate employee_id');
+  }
+}
 
   async register(registerDto: RegisterDto) {
     const { email, password, role, employee_id } = registerDto;
@@ -43,6 +65,8 @@ export class AuthService {
     user.role = role ?? UserRole.EMPLOYEE;
 
     if (employee_id !== undefined) {
+      await this.validateEmployee(employee_id);
+
       user.employee_id = employee_id;
     }
 
@@ -58,7 +82,7 @@ export class AuthService {
       },
     };
   }
-
+  
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
