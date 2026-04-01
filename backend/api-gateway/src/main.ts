@@ -6,6 +6,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // FIX CORS 
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  });
+
+  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,6 +21,7 @@ async function bootstrap() {
     }),
   );
 
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('API Gateway')
     .setDescription('Single entry point for WFH Attendance App')
