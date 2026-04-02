@@ -1,6 +1,6 @@
 # WFH Attendance & Employee Monitoring System
 
-A backend system built using a microservices architecture with NestJS. This application is designed to manage employee attendance (work from home) and provide monitoring capabilities for HR administrators.
+A fullstack web application built using a microservices architecture with NestJS. This application is designed to manage employee attendance (work from home) and provide monitoring capabilities for HR administrators.
 
 ---
 
