@@ -26,25 +26,25 @@ export class AuthService {
     return this.userRepository.find();
   }
 
-  private async validateEmployee(employee_id: number) {
-  try {
-    const response = await firstValueFrom(
-      this.httpService.get(
-        `${process.env.EMPLOYEE_SERVICE_URL}/employees/internal/${employee_id}`,
-      ),
-    );
+    private async validateEmployee(employee_id: number) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(
+          `${process.env.EMPLOYEE_SERVICE_URL}/employees/internal/${employee_id}`,
+        ),
+      );
 
-    return response.data;
-  } catch (error: any) {
-    const status = error?.response?.status;
+      return response.data;
+    } catch (error: any) {
+      const status = error?.response?.status;
 
-    if (status === 404) {
-      throw new BadRequestException('Invalid employee_id');
+      if (status === 404) {
+        throw new BadRequestException('Invalid employee_id');
+      }
+
+      throw new BadRequestException('Failed to validate employee_id');
     }
-
-    throw new BadRequestException('Failed to validate employee_id');
   }
-}
 
   async register(registerDto: RegisterDto) {
     const { email, password, role, employee_id } = registerDto;
@@ -65,7 +65,13 @@ export class AuthService {
     user.role = role ?? UserRole.EMPLOYEE;
 
     if (employee_id !== undefined) {
-      await this.validateEmployee(employee_id);
+      const employee = await this.validateEmployee(employee_id);
+
+      if (employee.email !== email) {
+        throw new BadRequestException(
+          'Email must match the employee email registered in employee service',
+        );
+      }
 
       user.employee_id = employee_id;
     }
