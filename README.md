@@ -1,47 +1,91 @@
-# WFH Attendance System (Microservices Architecture)
+# WFH Attendance & Employee Monitoring System
 
-A fullstack web application for Work From Home (WFH) attendance tracking and employee monitoring, built using a microservices architecture.
-
-This system is designed to simulate a real-world HR workflow, where administrators manage employee data and control user access, while employees submit daily attendance with optional proof.
+A backend system built using a microservices architecture with NestJS. This application is designed to manage employee attendance (work from home) and provide monitoring capabilities for HR administrators.
 
 ---
 
 # Overview
 
-This system provides:
+This project is a fullstack web application designed for employee work-from-home attendance tracking and monitoring. It is built using a microservices architecture with a clear separation of concerns between services.
 
-* Secure authentication and authorization (JWT-based)
-* Employee master data management
-* Attendance tracking with optional photo proof
-* Admin-controlled user account creation
-* Attendance monitoring for HR
-* Microservices-based backend architecture
+This system consists of multiple services that work together to handle:
+
+* Authentication and authorization using JWT
+* Employee data management
+* Attendance tracking with optional photo upload
+* Centralized API access through an API Gateway
 * Containerized deployment using Docker
+
+The system allows:
+
+* Employees to log in and submit attendance with optional photo proof
+* Admin (HR) to manage employee data and monitor attendance
+* Admin to create user accounts linked to employee records
+
+---
+
+# Tech Stack
+
+Backend
+
+* NestJS (TypeScript)
+* TypeORM
+* MySQL
+* Microservices Architecture
+* Docker & Docker Compose
+
+Frontend
+
+* React.js (Vite)
+* TailwindCSS
+
+Other
+
+* JWT Authentication
+* Swagger API Documentation
 
 ---
 
 # Architecture
 
 ```
-Frontend (React + Vite)
+Frontend (React)
         ↓
    API Gateway (3000)
         ↓
-------------------------------------------------
-| Auth Service        (3001)                   |
-| Employee Service    (3002)                   |
-| Attendance Service  (3003)                   |
-------------------------------------------------
+----------------------------------
+| Auth Service        (3001)     |
+| Employee Service    (3002)     |
+| Attendance Service  (3003)     |
+----------------------------------
         ↓
      MySQL Database
 ```
 
-## Architecture Highlights
+The backend is composed of multiple services:
 
-* Each service has a single responsibility
-* Communication through API Gateway
-* Internal validation via service-to-service calls
-* Shared database (MySQL)
+1. API Gateway (Port 3000)
+
+   * Single entry point for frontend
+   * Routes requests to internal services
+
+2. Auth Service (Port 3001)
+
+   * Handles authentication and authorization
+   * JWT token generation
+   * User account management
+
+3. Employee Service (Port 3002)
+
+   * Manages employee master data
+   * Supports create, update, activate, deactivate
+
+4. Attendance Service (Port 3003)
+
+   * Handles attendance submissions
+   * Supports photo upload (stored locally)
+
+All services are connected through Docker Compose and share a MySQL database.
 
 ---
 
@@ -49,69 +93,69 @@ Frontend (React + Vite)
 
 ## Auth Service (Port 3001)
 
-Handles authentication, authorization, and user account management.
+Responsible for authentication and user management.
 
-### Features
+Features:
 
-* Admin-driven user account creation (no public registration)
+* User registration
 * User login (JWT-based)
+* Profile retrieval (protected route)
+* JWT-based authentication
 * Role-based access control (ADMIN, EMPLOYEE)
-* Profile retrieval (protected routes)
+* Protected routes using guards
 
-### Implementation Details
+Implementation details:
 
 * Password hashing using bcrypt
 * JWT token generation and validation
-* Enforces email consistency with employee data
-* Validates employee_id via Employee Service
+* Role-based payload (ADMIN, EMPLOYEE)
 
 ---
 
 ## Employee Service (Port 3002)
 
-Manages employee master data.
+Responsible for managing employee master data.
 
-### Features
+Features:
 
 * Create employee
+* Retrieve all employees
+* Retrieve employee by ID
 * Update employee
-* Activate and deactivate employee
+* Deactivate employee
+* Activate employee
 * Prevent duplicate email and employee code
 
-### Data Strategy
+Access control:
 
-* Uses soft delete (is_active = false)
-* Preserves historical data
 * Restricted to ADMIN role
 
 ---
 
 ## Attendance Service (Port 3003)
 
-Handles employee attendance records.
+Responsible for handling attendance records.
 
-### Features
+Features:
 
-* Daily check-in with timestamp
-* Prevent multiple check-ins per day
-* Optional photo upload as proof
-* Attendance monitoring (ADMIN)
+* Employee check-in
+* Optional photo upload for attendance proof
+* Attendance monitoring (admin)
 * Filtering by employee and date
+* Prevent multiple check-ins in the same day
 
-### Photo Upload
+Access control:
 
-* Uses multer with diskStorage
-* Stored locally in:
+* EMPLOYEE: check-in
+* ADMIN: view-only monitoring
 
-```
-attendance-service/uploads/
-```
+Photo Upload Mechanism
 
+* Uses multer diskStorage
+* Files stored in:
+  attendance-service/uploads/
 * Accessible via:
-
-```
-http://localhost:3003/uploads/<filename>
-```
+  [http://localhost:3003/uploads/](http://localhost:3003/uploads/)<filename>
 
 ---
 
@@ -119,20 +163,18 @@ http://localhost:3003/uploads/<filename>
 
 Acts as the single entry point for all client requests.
 
-### Responsibilities
+Responsibilities:
 
-* Routes requests to appropriate services
+* Routes incoming requests to appropriate services
 * Simplifies frontend integration
 * Centralizes API access
-* Provides Swagger documentation
 
 ---
 
 # Authentication Flow
 
 1. User logs in and receives a JWT token
-
-2. Token is included in request headers:
+2. Token is sent in request headers:
 
 ```
 Authorization: Bearer <token>
@@ -141,100 +183,66 @@ Authorization: Bearer <token>
 3. Backend validates:
 
 * Token authenticity
-* User role (ADMIN or EMPLOYEE)
+* User role
 * Employee association (for attendance)
 
 ---
 
-# Key Features
+# User Account Management
 
-## Authentication and Authorization
-
-* JWT-based authentication
-* Role-based access control
-* Protected routes using guards
+* Admin-driven account creation (no public signup)
+* Each user is linked to an employee via employee_id
+* Email must match employee record (data consistency enforced)
 
 ---
 
-## Employee Management (ADMIN)
+# Data Integrity Improvements
 
-* Create employee
-* Update employee
-* Activate and deactivate employee
-* Duplicate data prevention
-
----
-
-## Attendance System
-
-* Daily check-in system
-* Prevent duplicate attendance per day
-* Optional photo upload
-* Admin monitoring support
+* employee_id validation via internal service-to-service call
+* Email consistency enforced between auth and employee service
+* Soft delete strategy using is_active flag
 
 ---
 
-## User Account Management
+# Important Design Decisions
 
-* No public registration
-* Accounts created by ADMIN only
-* Each user linked to employee_id
-* Email must match employee record
+1. Microservices Separation
+   Each service has a single responsibility:
 
----
+* Auth handles identity
+* Employee handles master data
+* Attendance handles activity data
 
-## Data Integrity
+2. No Public Registration
+   User accounts are created by admin to match internal HR workflow.
 
-* Cross-service validation (Auth to Employee)
-* Email consistency enforcement
-* Strong relationship between user and employee data
+3. Soft Delete Strategy
+   Employees are not deleted but marked inactive (is_active = false) to preserve historical data.
 
----
+4. Service-to-Service Validation
+   Auth service validates employee_id by calling employee service to ensure data integrity.
 
-## Photo Upload Mechanism
-
-* Multer-based file handling
-* Local storage
-* URL-based file access
+5. Email Consistency Enforcement
+   User email must match employee email to avoid identity mismatch.
 
 ---
 
-# Tech Stack
+# API Documentation (Swagger)
 
-## Backend
+Swagger documentation is available for each service:
 
-* NestJS (TypeScript)
-* TypeORM
-* MySQL
-* JWT Authentication
-* Multer (file upload)
-* Swagger
+| Service     | URL                                                              |
+| ----------- | ---------------------------------------------------------------- |
+| Auth        | [http://localhost:3001/api-docs](http://localhost:3001/api-docs) |
+| Employee    | [http://localhost:3002/api-docs](http://localhost:3002/api-docs) |
+| Attendance  | [http://localhost:3003/api-docs](http://localhost:3003/api-docs) |
+| API Gateway | [http://localhost:3000/api-docs](http://localhost:3000/api-docs) |
 
-## Frontend
+Swagger provides:
 
-* React.js (Vite)
-* TailwindCSS
-
-## Infrastructure
-
-* Docker
-* Docker Compose
-
----
-
-# Project Structure
-
-```
-backend/
-├── api-gateway/
-├── auth-service/
-├── employee-service/
-├── attendance-service/
-
-frontend/
-
-docker-compose.yml
-```
+* Endpoint overview
+* Request and response structure
+* Basic API testing capability
 
 ---
 
@@ -251,20 +259,18 @@ DB_PORT=3306
 DB_USERNAME=root
 DB_PASSWORD=root
 DB_NAME=wfh_db
-
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
-
 EMPLOYEE_SERVICE_URL=http://employee-service:3002
 ```
 
 ---
 
-# Running the Application
+# Running the Application (Docker)
 
 ## 1. Clone repository
 
-```
+```bash
 git clone <your-repository-url>
 cd wfh-attendance-app
 ```
@@ -273,7 +279,7 @@ cd wfh-attendance-app
 
 ## 2. Configure environment variables
 
-```
+```bash
 cp backend/auth-service/.env.example backend/auth-service/.env
 cp backend/employee-service/.env.example backend/employee-service/.env
 cp backend/attendance-service/.env.example backend/attendance-service/.env
@@ -282,49 +288,59 @@ cp backend/api-gateway/.env.example backend/api-gateway/.env
 
 ---
 
-## 3. Run with Docker
+## 3. Run services
 
-```
+```bash
 docker compose up --build
 ```
 
 ---
 
-## 4. Access services
+## 4. Service endpoints
 
-* Frontend: [http://localhost:5173](http://localhost:5173)
 * API Gateway: [http://localhost:3000](http://localhost:3000)
-* Swagger Docs: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+* Auth Service: [http://localhost:3001](http://localhost:3001)
+* Employee Service: [http://localhost:3002](http://localhost:3002)
+* Attendance Service: [http://localhost:3003](http://localhost:3003)
+* Frontend: [http://localhost:5173](http://localhost:5173)
 
 ---
 
-# API Documentation
+# Frontend Flow
 
-Swagger is available at:
+Admin:
 
-```
-http://localhost:3000/api-docs
-```
+* Login
+* Manage employees
+* Create user account for employees
+* Monitor attendance
 
-Provides:
+Employee:
 
-* Endpoint overview
-* Request and response schema
-* API testing interface
+* Login
+* Submit attendance (with optional photo)
 
 ---
 
 # Example API Flow
 
-## Login
+## 1. Register user
 
+```http
+POST /auth/register
 ```
+
+---
+
+## 2. Login
+
+```http
 POST /auth/login
 ```
 
 Response:
 
-```
+```json
 {
   "access_token": "..."
 }
@@ -332,9 +348,19 @@ Response:
 
 ---
 
-## Employee Management (ADMIN)
+## 3. Use token
 
+Header:
+
+```http
+Authorization: Bearer <token>
 ```
+
+---
+
+## 4. Employee management (ADMIN)
+
+```http
 POST /employees
 GET /employees
 PATCH /employees/:id
@@ -343,18 +369,18 @@ PATCH /employees/:id/deactivate
 
 ---
 
-## Attendance (EMPLOYEE)
+## 5. Attendance (EMPLOYEE)
 
-```
+```http
 POST /attendances/check-in
 POST /attendances/check-in-with-photo
 ```
 
 ---
 
-## Attendance Monitoring (ADMIN)
+## 6. Attendance monitoring (ADMIN)
 
-```
+```http
 GET /attendances
 GET /attendances?employee_id=1
 GET /attendances?attendance_date=YYYY-MM-DD
@@ -365,62 +391,31 @@ GET /attendances?attendance_date=YYYY-MM-DD
 # Security
 
 * JWT-based authentication
-* Role-based authorization
+* Role-based access control
 * Input validation using class-validator
-* Global validation pipe
-* Controlled service-to-service communication
+* Global validation pipe enabled across services
 
 ---
 
-# Important Design Decisions
+# Project Structure
 
-## Microservices Separation
-
-Each service has a single responsibility:
-
-* Auth handles identity and access
-* Employee handles master data
-* Attendance handles activity data
-
----
-
-## No Public Registration
-
-* Aligns with real HR systems
-* Prevents unauthorized account creation
+```
+backend/
+├── api-gateway/
+├── auth-service/
+├── employee-service/
+├── attendance-service/
+frontend/
+docker-compose.yml
+```
 
 ---
 
-## Soft Delete Strategy
+# Notes
 
-* Employees are not deleted
-* Uses is_active flag
-* Preserves historical records
-
----
-
-## Service-to-Service Validation
-
-* Auth validates employee_id via Employee Service
-* Prevents invalid relationships
-
----
-
-## Email Consistency Enforcement
-
-* User email must match employee email
-* Prevents identity mismatch
-
----
-
-# Future Improvements
-
-* Cloud storage (AWS S3 or Cloudinary)
-* Analytics dashboard
-* Email notification system
-* Pagination and filtering improvements
-* UI and UX enhancements
-* Event-driven architecture (Kafka or RabbitMQ)
+* No seed data is included. Data should be created manually through API.
+* Swagger is provided for API documentation and basic testing.
+* Postman or similar tools can be used for more advanced testing scenarios.
 
 ---
 
@@ -430,16 +425,12 @@ This project demonstrates:
 
 * Microservices architecture implementation
 * Secure authentication and authorization
-* Cross-service data integrity enforcement
-* Real-world HR workflow modeling
-* Fullstack system integration
-
-Suitable for portfolio, technical assessments, and academic projects.
+* Data integrity enforcement across services
+* Real-world HR system workflow design
+* Fullstack integration from backend to frontend
 
 ---
 
 # Author
 
-Agnes
-
----
+Agnes 
