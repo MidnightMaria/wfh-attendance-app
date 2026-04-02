@@ -24,6 +24,12 @@ type EmployeeForm = {
   hire_date: string;
 };
 
+type AccountForm = {
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'EMPLOYEE';
+};
+
 const emptyForm: EmployeeForm = {
   employee_code: '',
   full_name: '',
@@ -32,6 +38,12 @@ const emptyForm: EmployeeForm = {
   department: '',
   position: '',
   hire_date: '',
+};
+
+const emptyAccountForm: AccountForm = {
+  email: '',
+  password: '',
+  role: 'EMPLOYEE',
 };
 
 function extractErrorMessage(error: any): string {
@@ -45,8 +57,14 @@ export default function Employees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [accountForm, setAccountForm] = useState<AccountForm>(emptyAccountForm);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
 
@@ -96,23 +114,6 @@ export default function Employees() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleActivate = async (id: number) => {
-  try {
-    setMessage('');
-    setMessageType('');
-
-    await API.patch(`/employees/${id}/activate`);
-
-    setMessage('Employee activated successfully.');
-    setMessageType('success');
-
-    await fetchEmployees();
-    } catch (error) {
-        setMessage(extractErrorMessage(error));
-        setMessageType('error');
-    }
-    };
-
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
@@ -152,13 +153,75 @@ export default function Employees() {
     try {
       setMessage('');
       setMessageType('');
+
       await API.patch(`/employees/${id}/deactivate`);
+
       setMessage('Employee deactivated successfully.');
       setMessageType('success');
+
       await fetchEmployees();
     } catch (error) {
       setMessage(extractErrorMessage(error));
       setMessageType('error');
+    }
+  };
+
+  const handleActivate = async (id: number) => {
+    try {
+      setMessage('');
+      setMessageType('');
+
+      await API.patch(`/employees/${id}/activate`);
+
+      setMessage('Employee activated successfully.');
+      setMessageType('success');
+
+      await fetchEmployees();
+    } catch (error) {
+      setMessage(extractErrorMessage(error));
+      setMessageType('error');
+    }
+  };
+
+  const openCreateAccountModal = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setAccountForm({
+      email: employee.email,
+      password: '',
+      role: 'EMPLOYEE',
+    });
+    setShowAccountModal(true);
+  };
+
+  const closeCreateAccountModal = () => {
+    setShowAccountModal(false);
+    setSelectedEmployee(null);
+    setAccountForm(emptyAccountForm);
+  };
+
+  const handleCreateAccount = async () => {
+    if (!selectedEmployee) return;
+
+    try {
+      setSubmitting(true);
+      setMessage('');
+      setMessageType('');
+
+      await API.post('/auth/register', {
+        email: accountForm.email,
+        password: accountForm.password,
+        role: accountForm.role,
+        employee_id: selectedEmployee.id,
+      });
+
+      setMessage('User account created successfully.');
+      setMessageType('success');
+      closeCreateAccountModal();
+    } catch (error) {
+      setMessage(extractErrorMessage(error));
+      setMessageType('error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -303,32 +366,39 @@ export default function Employees() {
                           {employee.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                        <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                            <button
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <button
                             onClick={() => handleEdit(employee)}
                             className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                            >
+                          >
                             Edit
-                            </button>
+                          </button>
 
-                            {employee.is_active ? (
+                          <button
+                            onClick={() => openCreateAccountModal(employee)}
+                            className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                          >
+                            Create Account
+                          </button>
+
+                          {employee.is_active ? (
                             <button
-                                onClick={() => handleDeactivate(employee.id)}
-                                className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeactivate(employee.id)}
+                              className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
                             >
-                                Deactivate
+                              Deactivate
                             </button>
-                            ) : (
+                          ) : (
                             <button
-                                onClick={() => handleActivate(employee.id)}
-                                className="rounded-lg border border-green-200 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50"
+                              onClick={() => handleActivate(employee.id)}
+                              className="rounded-lg border border-green-200 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50"
                             >
-                                Activate
+                              Activate
                             </button>
-                            )}
+                          )}
                         </div>
-                        </td>
+                      </td>
                     </tr>
                   ))}
 
@@ -348,6 +418,101 @@ export default function Employees() {
           )}
         </div>
       </div>
+
+      {showAccountModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Create User Account
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Create login credentials for {selectedEmployee.full_name}.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Employee ID
+                </label>
+                <input
+                  disabled
+                  value={selectedEmployee.id}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-slate-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Email
+                </label>
+                <input
+                  value={accountForm.email}
+                  onChange={(e) =>
+                    setAccountForm((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={accountForm.password}
+                  onChange={(e) =>
+                    setAccountForm((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Role
+                </label>
+                <select
+                  value={accountForm.role}
+                  onChange={(e) =>
+                    setAccountForm((prev) => ({
+                      ...prev,
+                      role: e.target.value as 'ADMIN' | 'EMPLOYEE',
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                >
+                  <option value="EMPLOYEE">EMPLOYEE</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCreateAccount}
+                  disabled={submitting}
+                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {submitting ? 'Submitting...' : 'Create Account'}
+                </button>
+
+                <button
+                  onClick={closeCreateAccountModal}
+                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }
